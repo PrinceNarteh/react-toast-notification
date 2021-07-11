@@ -1,4 +1,5 @@
-import styled, { css } from "styled-components";
+import { useState, useEffect } from "react";
+import styled, { css, keyframes } from "styled-components";
 
 interface NotificationProps {
   type: "SUCCESS" | "INFO" | "WARNING" | "DANGER";
@@ -6,21 +7,85 @@ interface NotificationProps {
 }
 
 const Notification: React.FC<NotificationProps> = ({ message, ...props }) => {
+  const [exit, setExit] = useState<boolean>(false);
+  const [width, setWidth] = useState<number>(0);
+  const [intervalID, setIntervalID] = useState<number | undefined>(undefined);
+
+  const handleStartTimer = () => {
+    const id: any = setInterval((prevState) => {
+      setWidth((prevState: number) => {
+        if (prevState < 100) {
+          return prevState + 0.5;
+        }
+        return prevState;
+      });
+    }, 20);
+    setIntervalID(id);
+  };
+
+  const handlePauseTimer = () => {
+    clearInterval(intervalID);
+  };
+
+  const handleCloseNotification = () => {
+    handlePauseTimer();
+    setExit(true);
+    setTimeout(() => {}, 400);
+  };
+
+  useEffect(() => {
+    handleStartTimer();
+  }, []);
+
+  useEffect(() => {
+    if (width === 100) {
+      // close notification
+      handleCloseNotification();
+    }
+  }, []);
+
   return (
-    <StyledNotification {...props}>
+    <StyledNotification
+      {...props}
+      onMouseEnter={handlePauseTimer}
+      onMouseLeave={handleStartTimer}
+    >
       <p>{message}</p>
-      <div className="bar" />
+      <div className="bar" style={{ width: `${width}% ${exit && "exist"}` }} />
     </StyledNotification>
   );
 };
 
 type IStyledNotification = Omit<NotificationProps, "message">;
 
+const slideLeft = keyframes`
+  0% {
+    margin-left: 120%
+  }
+
+  100% {
+    margin-left: 0
+  }
+`;
+
+const slideRight = keyframes`
+  0% {
+    margin-left: 120%
+  }
+
+  100% {
+    margin-left: 0
+  }
+`;
+
 const StyledNotification = styled.div<IStyledNotification>`
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  width: 100%;
   border-radius: 3px;
   overflow-x: hidden;
   margin-bottom: 20px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  animation: ${slideLeft} 0.4s;
+  animation-fill-mode: forwards;
 
   p {
     margin: 0;
@@ -57,6 +122,11 @@ const StyledNotification = styled.div<IStyledNotification>`
       css`
         background-color: #dc3545;
       `}
+  }
+
+  .exist {
+    animation: ${slideRight} 0.4s;
+    animation-fill-mode: forwards;
   }
 `;
 

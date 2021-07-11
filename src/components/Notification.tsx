@@ -2,11 +2,18 @@ import { useState, useEffect } from "react";
 import styled, { css, keyframes } from "styled-components";
 
 interface NotificationProps {
+  id: string;
   type: "SUCCESS" | "INFO" | "WARNING" | "DANGER";
   message: string;
+  dispatch: React.Dispatch<any>;
 }
 
-const Notification: React.FC<NotificationProps> = ({ message, ...props }) => {
+const Notification: React.FC<NotificationProps> = ({
+  id,
+  dispatch,
+  message,
+  ...props
+}) => {
   const [exit, setExit] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(0);
   const [intervalID, setIntervalID] = useState<number | undefined>(undefined);
@@ -17,6 +24,7 @@ const Notification: React.FC<NotificationProps> = ({ message, ...props }) => {
         if (prevState < 100) {
           return prevState + 0.5;
         }
+        clearInterval(id);
         return prevState;
       });
     }, 20);
@@ -30,7 +38,12 @@ const Notification: React.FC<NotificationProps> = ({ message, ...props }) => {
   const handleCloseNotification = () => {
     handlePauseTimer();
     setExit(true);
-    setTimeout(() => {}, 400);
+    setTimeout(() => {
+      dispatch({
+        type: "REMOVE_NOTIFICATION",
+        id,
+      });
+    }, 400);
   };
 
   useEffect(() => {
@@ -56,7 +69,7 @@ const Notification: React.FC<NotificationProps> = ({ message, ...props }) => {
   );
 };
 
-type IStyledNotification = Omit<NotificationProps, "message">;
+type IStyledNotification = Pick<NotificationProps, "type">;
 
 const slideLeft = keyframes`
   0% {
